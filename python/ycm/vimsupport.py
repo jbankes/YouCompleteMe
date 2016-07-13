@@ -44,6 +44,8 @@ FIXIT_OPENING_BUFFERS_MESSAGE_FORMAT = (
     'buffers. The quickfix list can then be used to review the changes. No '
     'files will be written to disk. Do you wish to continue?' )
 
+NO_SELECTION_MADE_MSG = "No valid selection was made; aborting."
+
 
 def CurrentLineAndColumn():
   """Returns the 0-based current line and 0-based current column."""
@@ -253,13 +255,42 @@ def SetLocationList( diagnostics ):
   vim.eval( 'setloclist( 0, {0} )'.format( json.dumps( diagnostics ) ) )
 
 
-def SetQuickFixList( quickfix_list, display=False ):
-  """list should be in qflist format: see ":h setqflist" for details"""
+def SetQuickFixList( quickfix_list, focus = False, autoclose = False ):
+  """Populate the quickfix list and open it. List should be in qflist format:
+  see ":h setqflist" for details. When focus is set to True, the quickfix
+  window becomes the active window. When autoclose is set to True, the quickfix
+  window is automatically closed after an entry is selected."""
   vim.eval( 'setqflist( {0} )'.format( json.dumps( quickfix_list ) ) )
+  OpenQuickFixList( focus, autoclose )
 
-  if display:
-    vim.command( 'copen {0}'.format( len( quickfix_list ) ) )
+
+def OpenQuickFixList( focus = False, autoclose = False ):
+  """Open the quickfix list to full width at the bottom of the screen with its
+  height automatically set to fit all entries. This behavior can be overridden
+  by using the YcmQuickFixOpened autocommand.
+  See the SetQuickFixList function for the focus and autoclose options."""
+  vim.command( 'botright copen' )
+
+  SetFittingHeightForCurrentWindow()
+
+  if autoclose:
+    # This autocommand is automatically removed when the quickfix window is
+    # closed.
+    vim.command( 'au WinLeave <buffer> q' )
+
+  if VariableExists( '#User#YcmQuickFixOpened' ):
+    vim.command( 'doautocmd User YcmQuickFixOpened' )
+
+  if not focus:
     JumpToPreviousWindow()
+
+
+def SetFittingHeightForCurrentWindow():
+  window_width = GetIntValue( 'winwidth( 0 )' )
+  fitting_height = 0
+  for line in vim.current.buffer:
+    fitting_height += len( line ) // window_width + 1
+  vim.command( '{0}wincmd _'.format( fitting_height ) )
 
 
 def ConvertDiagnosticsToQfList( diagnostics ):
@@ -412,8 +443,11 @@ def PostVimMessage( message ):
 # Unlike PostVimMesasge, this supports messages with newlines in them because it
 # uses 'echo' instead of 'echomsg'. This also means that the message will NOT
 # appear in Vim's message log.
+# Similarly to PostVimMesasge, we do a redraw first to clear any previous
+# messages, which might lead to this message appearing without a newline and/or
+# requring the "Press ENTER or type command to continue".
 def PostMultiLineNotice( message ):
-  vim.command( "echohl WarningMsg | echo '{0}' | echohl None"
+  vim.command( "redraw | echohl WarningMsg | echo '{0}' | echohl None"
                .format( EscapeForVim( ToUnicode( message ) ) ) )
 
 
@@ -428,6 +462,10 @@ def PresentDialog( message, choices, default_choice_index = 0 ):
 
   PresentDialog will return a 0-based index into the list
   or -1 if the dialog was dismissed by using <Esc>, Ctrl-C, etc.
+
+  If you are presenting a list of options for the user to choose from, such as
+  a list of imports, or lines to insert (etc.), SelectFromList is a better
+  option.
 
   See also:
     :help confirm() in vim (Note that vim uses 1-based indexes)
@@ -447,6 +485,58 @@ def Confirm( message ):
   """Display |message| with Ok/Cancel operations. Returns True if the user
   selects Ok"""
   return bool( PresentDialog( message, [ "Ok", "Cancel" ] ) == 0 )
+
+
+def SelectFromList( prompt, items ):
+  """Ask the user to select an item from the list |items|.
+
+  Presents the user with |prompt| followed by a numbered list of |items|,
+  from which they select one. The user is asked to enter the number of an
+  item or click it.
+
+  |items| should not contain leading ordinals: they are added automatically.
+
+  Returns the 0-based index in the list |items| that the user selected, or a
+  negative number if no valid item was selected.
+
+  See also :help inputlist()."""
+
+  vim_items = [ prompt ]
+  vim_items.extend( [ "{0}: {1}".format( i + 1, item )
+                      for i, item in enumerate( items ) ] )
+
+  # The vim documentation warns not to present lists larger than the number of
+  # lines of display. This is sound advice, but there really isn't any sensible
+  # thing we can do in that scenario. Testing shows that Vim just pages the
+  # message; that behaviour is as good as any, so we don't manipulate the list,
+  # or attempt to page it.
+
+  # For an explanation of the purpose of inputsave() / inputrestore(),
+  # see :help input(). Briefly, it makes inputlist() work as part of a mapping.
+  vim.eval( 'inputsave()' )
+  try:
+    # Vim returns the number the user entered, or the line number the user
+    # clicked. This may be wildly out of range for our list. It might even be
+    # negative.
+    #
+    # The first item is index 0, and this maps to our "prompt", so we subtract 1
+    # from the result and return that, assuming it is within the range of the
+    # supplied list. If not, we return negative.
+    #
+    # See :help input() for explanation of the use of inputsave() and inpput
+    # restore(). It is done in try/finally in case vim.eval ever throws an
+    # exception (such as KeyboardInterrupt)
+    selected = int( vim.eval( "inputlist( "
+                              + json.dumps( vim_items )
+                              + " )" ) ) - 1
+  finally:
+    vim.eval( 'inputrestore()' )
+
+  if selected < 0 or selected >= len( items ):
+    # User selected something outside of the range
+    raise RuntimeError( NO_SELECTION_MADE_MSG )
+
+  return selected
 
 
 def EchoText( text, log_as_message = True ):
@@ -641,7 +731,7 @@ def ReplaceChunks( chunks ):
 
   # Open the quickfix list, populated with entries for each location we changed.
   if locations:
-    SetQuickFixList( locations, True )
+    SetQuickFixList( locations )
 
   EchoTextVimWidth( "Applied " + str( len( chunks ) ) + " changes" )
 
@@ -837,7 +927,9 @@ def WriteToPreviewWindow( message ):
 def CheckFilename( filename ):
   """Check if filename is openable."""
   try:
-    open( filename ).close()
+    # We don't want to check for encoding issues when trying to open the file
+    # so we open it in binary mode.
+    open( filename, mode = 'rb' ).close()
   except TypeError:
     raise RuntimeError( "'{0}' is not a valid filename".format( filename ) )
   except IOError as error:
