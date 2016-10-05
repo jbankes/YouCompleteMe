@@ -210,10 +210,10 @@ that are conservatively turned off by default that you may want to turn on.
 Please refer to the full Installation Guide below; the following commands are
 provided on a best-effort basis and may not work for you.
 
-Make sure you have Vim 7.3.598 with python2 or python3 support. Ubuntu 14.04 and
-later have a Vim that's recent enough. You can see the version of Vim installed
-by running `vim --version`. If the version is too old, you may need to [compile
-Vim from source][vim-build] (don't worry, it's easy).
+Make sure you have Vim 7.4.143 with Python 2 or Python 3 support. Ubuntu 14.10
+and later have a Vim that's recent enough. You can see the version of Vim
+installed by running `vim --version`. If the version is too old, you may need to
+[compile Vim from source][vim-build] (don't worry, it's easy).
 
 Install YouCompleteMe with [Vundle][].
 
@@ -272,7 +272,7 @@ that are conservatively turned off by default that you may want to turn on.
 Please refer to the full Installation Guide below; the following commands are
 provided on a best-effort basis and may not work for you.
 
-Make sure you have Vim 7.3.598 with Python 2 or Python 3 support. Fedora 21 and
+Make sure you have Vim 7.4.143 with Python 2 or Python 3 support. Fedora 21 and
 later have a Vim that's recent enough. You can see the version of Vim installed
 by running `vim --version`. If the version is too old, you may need to [compile
 Vim from source][vim-build] (don't worry, it's easy).
@@ -337,7 +337,7 @@ provided on a best-effort basis and may not work for you.
 **Important:** we assume that you are using the `cmd.exe` command prompt and
 that you know how to add an executable to the PATH environment variable.
 
-Make sure you have at least Vim 7.3.598 with Python 2 or Python 3 support. You
+Make sure you have at least Vim 7.4.143 with Python 2 or Python 3 support. You
 can check the version and which Python is supported by typing `:version` inside
 Vim. Look at the features included: `+python/dyn` for Python 2 and
 `+python3/dyn` for Python 3. Take note of the Vim architecture, i.e. 32 or
@@ -414,15 +414,15 @@ Please refer to the full Installation Guide below; the following commands are
 provided on a best-effort basis and may not work for you. OpenBSD / FreeBSD are
 not officially supported platforms by YCM.
 
-Make sure you have Vim 7.3.598 with Python 2 or Python 3 support.
+Make sure you have Vim 7.4.143 with Python 2 or Python 3 support.
 
 OpenBSD 5.5 and later have a Vim that's recent enough. You can see the version of
 Vim installed by running `vim --version`.
 
 FreeBSD 10.x comes with clang compiler but not the libraries needed to install.
 
-    pkg install llvm35 boost-all boost-python-libs clang35
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/llvm35/lib/
+    pkg install llvm38 boost-all boost-python-libs clang38
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/llvm38/lib/
 
 Install YouCompleteMe with [Vundle][].
 
@@ -491,19 +491,19 @@ process.
 
 **Please follow the instructions carefully. Read EVERY WORD.**
 
-1.  **Ensure that your version of Vim is _at least_ 7.3.598 _and_ that it has
+1.  **Ensure that your version of Vim is _at least_ 7.4.143 _and_ that it has
     support for Python 2 or Python 3 scripting**.
 
     Inside Vim, type `:version`. Look at the first two to three lines of output;
     it should say `Vi IMproved X.Y`, where X.Y is the major version of vim. If
-    your version is greater than 7.3, then you're all set. If your version is
-    7.3 then look below that where it says, `Included patches: 1-Z`, where Z
-    will be some number. That number needs to be 598 or higher.
+    your version is greater than 7.4, then you're all set. If your version is
+    7.4 then look below that where it says, `Included patches: 1-Z`, where Z
+    will be some number. That number needs to be 143 or higher.
 
     If your version of Vim is not recent enough, you may need to [compile Vim
     from source][vim-build] (don't worry, it's easy).
 
-    After you have made sure that you have Vim 7.3.598+, type the following in
+    After you have made sure that you have Vim 7.4.143+, type the following in
     Vim: `:echo has('python') || has('python3')`. The output should be 1. If
     it's 0, then get a version of Vim with Python support.
 
@@ -638,9 +638,9 @@ process.
 
   - C# support: install [Mono on non-Windows platforms][mono-install]. Navigate
     to `YouCompleteMe/third_party/ycmd/third_party/OmniSharpServer` and run
-    `msbuild` (Windows) or `xbuild` (other platforms, using Mono) depending on
-    your platform. On Windows, be sure that [the build utility `msbuild` is in
-    your PATH][add-msbuild-to-path].
+    `msbuild /property:Configuration=Release` on Windows. Replace `msbuild` by
+    `xbuild` on other platforms. On Windows, be sure that [the build utility
+    `msbuild` is in your PATH][add-msbuild-to-path].
 
   - Go support: install [Go][go-install] and add it to your path. Navigate to
     `YouCompleteMe/third_party/ycmd/third_party/gocode` and run `go build`.
@@ -872,8 +872,7 @@ JavaScript project, you can do one of the following:
   [ycmd server][ycmd] (`:YcmRestartServer`)
 - change Vim's working directory (`:cd /path/to/new/project`), open a JavaScript
   file (or set filetype to JavaScript) and restart the Tern server using YCM
-  completer subcommands `:YcmCompleter StopServer` and `:YcmCompleter
-  StartServer`.
+  completer subcommand `:YcmCompleter RestartServer`.
 
 #### Tips and tricks
 
@@ -977,15 +976,16 @@ package you have in the virtual environment.
 
 ### Semantic Completion for Other Languages
 
-Python, C#, Go, Rust, and TypeScript are supported natively by YouCompleteMe
-using the [Jedi][], [Omnisharp][], [Gocode][], [racer][], and [TSServer][]
-engines, respectively. Check the [installation](#installation) section for
-instructions to enable these features if desired.
+C-family, C#, Go, JavaScript, Python, Rust, and TypeScript languages are
+supported natively by YouCompleteMe using the [Clang][], [OmniSharp][],
+[Gocode][]/[Godef][], [Tern][], [Jedi][], [racer][], and [TSServer][] engines,
+respectively. Check the [installation](#installation) section for instructions
+to enable these features if desired.
 
 YCM will use your `omnifunc` (see `:h omnifunc` in Vim) as a source for semantic
 completions if it does not have a native semantic completion engine for your
 file's filetype. Vim comes with okayish omnifuncs for various languages like
-Ruby, PHP etc. It depends on the language.
+Ruby, PHP, etc. It depends on the language.
 
 You can get stellar omnifuncs for Java and Ruby with [Eclim][]. Just make sure
 you have the _latest_ Eclim installed and configured (this means Eclim `>= 2.2.*`
@@ -1307,6 +1307,19 @@ NOTE: Causes re-parsing of the current translation unit.
 
 Supported in filetypes: `c, cpp, objc, objcpp, javascript, typescript`
 
+#### The `GetTypeImprecise` subcommand
+
+WARNING: This command trades correctness for speed!
+
+Same as the `GetType` command except that it doesn't recompile the file with
+libclang before looking up nodes in the AST. This can be very useful when you're
+editing files that take long to compile but you know that you haven't made any
+changes since the last parse that would lead to incorrect type. When you're
+just browsing around your codebase, this command can spare you quite a bit of
+latency.
+
+Supported in filetypes: `c, cpp, objc, objcpp`
+
 #### The `GetParent` subcommand
 
 Echos the semantic parent of the point under the cursor.
@@ -1350,6 +1363,19 @@ under the cursor. Depending on the file type, this includes things like:
 
 Supported in filetypes: `c, cpp, objc, objcpp, cs, python, typescript,
 javascript`
+
+#### The `GetDocImprecise` subcommand
+
+WARNING: This command trades correctness for speed!
+
+Same as the `GetDoc` command except that it doesn't recompile the file with
+libclang before looking up nodes in the AST. This can be very useful when you're
+editing files that take long to compile but you know that you haven't made any
+changes since the last parse that would lead to incorrect docs. When you're
+just browsing around your codebase, this command can spare you quite a bit of
+latency.
+
+Supported in filetypes: `c, cpp, objc, objcpp`
 
 ### Refactoring and FixIt Commands
 
@@ -1444,32 +1470,6 @@ These commands are for general administration, rather than IDE-like features.
 They cover things like the semantic engine server instance and compilation
 flags.
 
-#### The `ClearCompilationFlagCache` subcommand
-
-YCM caches the flags it gets from the `FlagsForFile` function in your
-`ycm_extra_conf.py` file if you return them with the `do_cache` parameter set to
-`True`. The cache is in memory and is never invalidated (unless you restart Vim
-of course).
-
-This command clears that cache entirely. YCM will then re-query your
-`FlagsForFile` function as needed in the future.
-
-Supported in filetypes: `c, cpp, objc, objcpp`
-
-#### The `StartServer` subcommand
-
-Starts the semantic-engine-as-localhost-server for those semantic engines that
-work as separate servers that YCM talks to.
-
-Supported in filetypes: `cs, go, javascript, rust`
-
-#### The `StopServer` subcommand
-
-Stops the semantic-engine-as-localhost-server for those semantic engines that
-work as separate servers that YCM talks to.
-
-Supported in filetypes: `cs, go, javascript, rust`
-
 #### The `RestartServer` subcommand
 
 Restarts the semantic-engine-as-localhost-server for those semantic engines that
@@ -1482,7 +1482,19 @@ python binary to use to restart the Python semantic engine.
 :YcmCompleter RestartServer /usr/bin/python3.4
 ```
 
-Supported in filetypes: `cs, python, rust`
+Supported in filetypes: `cs, go, javascript, python, rust, typescript`
+
+#### The `ClearCompilationFlagCache` subcommand
+
+YCM caches the flags it gets from the `FlagsForFile` function in your
+`ycm_extra_conf.py` file if you return them with the `do_cache` parameter set to
+`True`. The cache is in memory and is never invalidated (unless you restart Vim
+of course).
+
+This command clears that cache entirely. YCM will then re-query your
+`FlagsForFile` function as needed in the future.
+
+Supported in filetypes: `c, cpp, objc, objcpp`
 
 #### The `ReloadSolution` subcommand
 
@@ -2507,11 +2519,6 @@ fixes that should make YCM work with such a configuration. Also rebuild Macvim
 then. If you still get problems with this, see [issue #18][issue18] for
 suggestions.
 
-### Vim segfaults when I use the semantic completer in Ruby files
-
-This was caused by a Vim bug. Update your version of Vim (Vim 7.3.874 is known
-to work, earlier versions may also fix this issue).
-
 ### I get `LONG_BIT definition appears wrong for platform` when compiling
 
 Look at the output of your CMake call. There should be a line in it like the
@@ -2600,7 +2607,7 @@ with `--enable-framework`):
   `PYTHON_CONFIGURE_OPTS="--enable-shared" pyenv install {version}`
 
 
-## `install.py` says python must be compiled with `--enable-framework`. Wat?
+### `install.py` says python must be compiled with `--enable-framework`. Wat?
 
 See the previous answer for how to ensure your python is built to support
 dynamic modules.
@@ -2648,6 +2655,16 @@ g:UltiSnipsJumpForwardTrigger
 g:UltiSnipsJumpBackwardTrigger
 ```
 
+### Snippets added with `:UltiSnipsAddFiletypes` do not appear in the popup menu
+
+For efficiency, YCM only fetches UltiSnips snippets in specific scenarios like
+visiting a buffer or setting its filetype. You can force YCM to retrieve them by
+manually triggering the `FileType` autocommand:
+
+```viml
+:doautocmd FileType
+```
+
 ### Why isn't YCM just written in plain VimScript, FFS?
 
 Because of the identifier completion engine and subsequence-based filtering.
@@ -2669,7 +2686,9 @@ Those needed to be fixed upstream (and were). A few months after those bugs were
 fixed, Vim trunk landed the `pyeval()` function which improved YCM performance
 even more since less time was spent serializing and deserializing data between
 Vim and the embedded Python interpreter. A few critical bugfixes for `pyeval()`
-landed in Vim 7.3.584 (and a few commits before that).
+landed in Vim 7.3.584 (and a few commits before that), and given the current
+availability of Vim 7.4.143, which features improved events for text change
+detection, it has been chosen.
 
 ### I get annoying messages in Vim's status area when I type
 
@@ -2814,9 +2833,9 @@ version of Python.
 
 ### On Windows I get `E887: Sorry, this command is disabled, the Python's site module could not be loaded`
 
-If you are running vim on Windows with Python 2.7.11, this is likely caused by 
+If you are running vim on Windows with Python 2.7.11, this is likely caused by
 a [bug][vim_win-python2.7.11-bug]. Follow this [workaround]
-[vim_win-python2.7.11-bug_workaround] or use a different version (Python 2.7.9 
+[vim_win-python2.7.11-bug_workaround] or use a different version (Python 2.7.12
 does not suffer from the bug).
 
 ### I can't complete python packages in a virtual environment.
